@@ -136,12 +136,12 @@ dist
 .pnp.*
 
 # AI assistant files
-.agents 
-.agents/skills 
-.claude 
-.junie 
-.kiro 
-.next-docs 
-.qoder 
-.trae 
-.windsurf
+.agents/
+.agents/skills/
+.claude/
+.junie/
+.kiro/
+.next-docs/
+.qoder/
+.trae/
+.windsurf/

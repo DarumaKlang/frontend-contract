@@ -134,3 +134,14 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# AI assistant files
+.agents 
+.agents/skills 
+.claude 
+.junie 
+.kiro 
+.next-docs 
+.qoder 
+.trae 
+.windsurf

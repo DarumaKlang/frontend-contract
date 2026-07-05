@@ -8,23 +8,39 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
   const router = useRouter();
-  const { login } = useAuth();
+  const { signInWithSupabase, signInWithGoogle, signInWithMagicLink } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      login(email, 'user', data.user ?? null, data.token ?? null);
+    setStatus('');
+    const result = await signInWithSupabase(email, password);
+    if (result.ok) {
       router.push('/profile');
     } else {
-      setError(data.error || 'Login failed');
+      setError(result.error || 'Login failed');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setStatus('');
+    const result = await signInWithGoogle();
+    if (!result.ok) {
+      setError(result.error || 'Google sign-in failed');
+    }
+  };
+
+  const handleMagicLink = async () => {
+    setError('');
+    setStatus('');
+    const result = await signInWithMagicLink(email);
+    if (result.ok) {
+      setStatus(result.message || 'Magic link sent');
+    } else {
+      setError(result.error || 'Magic link failed');
     }
   };
 
@@ -36,6 +52,7 @@ export default function Login() {
       >
         <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">เข้าสู่ระบบ</h2>
         {error && <p className="mb-4 text-center text-red-600">{error}</p>}
+        {status && <p className="mb-4 text-center text-green-700">{status}</p>}
         <label className="block text-sm font-medium text-gray-700">อีเมล</label>
         <input
           type="email"
@@ -58,6 +75,24 @@ export default function Login() {
         >
           Login
         </button>
+
+        <div className="mt-4 space-y-2">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full rounded border border-indigo-600 bg-white px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50"
+          >
+            Sign in with Google
+          </button>
+          <button
+            type="button"
+            onClick={handleMagicLink}
+            className="w-full rounded border border-purple-600 bg-white px-4 py-2 font-semibold text-purple-700 hover:bg-purple-50"
+          >
+            Send magic link
+          </button>
+        </div>
+
         <p className="mt-4 text-center text-gray-700">
           ยังไม่มีบัญชี?{' '}
           <a href="/register" className="text-indigo-800 underline">

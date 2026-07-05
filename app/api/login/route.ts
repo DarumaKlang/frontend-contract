@@ -1,37 +1,31 @@
 import { NextResponse } from 'next/server';
-import { getBackendBaseUrl } from '@/lib/config';
-
-const backendBaseUrl = getBackendBaseUrl();
+import { getSupabaseClient } from '@/lib/supabase';
 
 export async function POST(req: Request) {
-  if (!backendBaseUrl) {
-    return NextResponse.json(
-      { error: 'Backend manager URL is not configured' },
-      { status: 500 }
-    );
-  }
-
   try {
     const { email, password } = await req.json();
-    const response = await fetch(`${backendBaseUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
+
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+
+    return NextResponse.json({
+      user: data.user,
+      token: data.session?.access_token ?? null,
     });
-
-    const data = await response.json().catch(() => null);
-
-    return NextResponse.json(
-      data ?? { error: 'Backend manager request failed' },
-      { status: response.status }
-    );
   } catch (error) {
-    console.error('Login proxy error:', error);
-    return NextResponse.json(
-      { error: 'Unable to reach backend manager' },
-      { status: 502 }
-    );
+    console.error('Supabase login error:', error);
+    return NextResponse.json({ error: 'Unable to sign in with Supabase' }, { status: 502 });
   }
 }

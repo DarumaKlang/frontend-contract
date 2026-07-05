@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import type { TranslateFn } from '../types';
 import type { ContractData, Language, PreviewFormat, Toast, ToastType } from '../types';
 
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token');
+};
+
 const LOCALIZATION = {
   th: {
     'badge-main': 'ถูกต้องตามประมวลกฎหมายแพ่งและพาณิชย์',
@@ -174,9 +179,13 @@ export function useWizard() {
     };
     const method = contractId ? 'PUT' : 'POST';
     const url = contractId ? `/api/contracts/${contractId}` : '/api/contracts';
+    const token = getAuthToken();
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(payload),
     });
     if (!res.ok) {

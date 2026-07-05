@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getBackendBaseUrl } from '@/lib/config';
-
-const backendBaseUrl = getBackendBaseUrl();
+import { getSupabaseClient } from '@/lib/supabase';
 
 export async function POST(request: Request) {
-  if (!backendBaseUrl) {
-    return NextResponse.json(
-      { error: 'Backend manager URL is not configured' },
-      { status: 500 }
-    );
-  }
-
   try {
     const { email, password } = await request.json();
 
@@ -27,29 +18,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const response = await fetch(`${backendBaseUrl}/api/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`,
       },
-      body: JSON.stringify({
-        name: email.split('@')[0],
-        email,
-        password,
-      }),
     });
 
-    const data = await response.json().catch(() => null);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
-    return NextResponse.json(
-      data ?? { error: 'Backend manager request failed' },
-      { status: response.status }
-    );
+    return NextResponse.json({
+      user: data.user,
+      token: data.session?.access_token ?? null,
+    });
   } catch (error) {
-    console.error('Register proxy error:', error);
-    return NextResponse.json(
-      { error: 'Unable to reach backend manager' },
-      { status: 502 }
-    );
+    console.error('Supabase register error:', error);
+    return NextResponse.json({ error: 'Unable to register with Supabase' }, { status: 502 });
   }
 }

@@ -9,22 +9,16 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const { login } = useAuth();
+  const { signUpWithSupabase } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      login(email, 'user', data.user ?? null, data.token ?? null);
+    const result = await signUpWithSupabase(email, password);
+    if (result.ok) {
       router.push('/profile');
     } else {
-      setError(data.error || 'Registration failed');
+      setError(result.error || 'Registration failed');
     }
   };
 

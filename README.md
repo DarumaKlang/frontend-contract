@@ -23,7 +23,7 @@ This repository is a Next.js app router project for generating contract and leas
 pnpm install
 ```
 
-2. Create a `.env` file in the repo root with your Stripe credentials:
+2. Create a `.env` file in the repo root with your Stripe credentials and Supabase values:
 
 ```dotenv
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
@@ -31,6 +31,13 @@ STRIPE_SECRET_KEY=sk_test_xxx
 PRICE_ID=price_xxx
 DOMAIN=http://localhost:3000
 STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_REDIRECT_URL=http://localhost:3000/auth/callback
 ```
 
 3. Start the development server:
@@ -40,6 +47,14 @@ pnpm dev
 ```
 
 4. Open the app in your browser at `http://localhost:3000`.
+
+## Supabase integration
+
+The app now uses Supabase for authentication and contract persistence.
+
+1. Create the table and policies by running the SQL in [supabase/migrations/001_create_contracts.sql](supabase/migrations/001_create_contracts.sql) in the Supabase SQL Editor.
+2. Make sure the environment variables above are set.
+3. Sign in or register in the app, then save a contract to store it in Supabase.
 
 ## Stripe integration
 

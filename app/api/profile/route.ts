@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase';
 
+function asObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = getSupabaseClient();
@@ -65,16 +69,38 @@ export async function POST(request: Request) {
 
     const existingHistory = Array.isArray(existingProfile?.contract_history) ? existingProfile.contract_history : [];
     const existingLinks = Array.isArray(existingProfile?.document_links) ? existingProfile.document_links : [];
-    const existingFrequent = existingProfile?.frequent_profile_data && typeof existingProfile.frequent_profile_data === 'object'
-      ? existingProfile.frequent_profile_data
-      : {};
+    const existingFrequent = asObject(existingProfile?.frequent_profile_data);
 
     const nextHistory = [...existingHistory, ...(payload.contract_history ?? [])].slice(-10);
     const nextLinks = [...existingLinks, ...(payload.document_links ?? [])].slice(-10);
-    const nextFrequent = {
-      ...(existingFrequent as Record<string, unknown>),
-      ...(payload.frequent_profile_data ?? {}),
-    };
+    const nextFrequent = { ...existingFrequent, ...asObject(payload.frequent_profile_data) };
+
+    if (payload.billing_profile) {
+      nextFrequent.billing_profile = {
+        ...asObject(existingFrequent.billing_profile),
+        ...asObject(payload.billing_profile),
+      };
+    }
+
+    if (payload.onboarding_profile) {
+      nextFrequent.onboarding_profile = {
+        ...asObject(existingFrequent.onboarding_profile),
+        ...asObject(payload.onboarding_profile),
+      };
+    }
+
+    if (payload.onboarding_completed !== undefined) {
+      nextFrequent.onboarding_completed = payload.onboarding_completed;
+    }
+
+    if (payload.subscription_plan) {
+      nextFrequent.subscription_plan = payload.subscription_plan;
+    }
+
+    if (payload.stripe_customer_id) {
+      nextFrequent.stripe_customer_id = payload.stripe_customer_id;
+    }
+
     const nextPoints = Number(existingProfile?.points ?? 0) + Number(payload.points ?? 0);
 
     const updatePayload = {

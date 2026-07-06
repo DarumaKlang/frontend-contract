@@ -1,15 +1,17 @@
 import { FileSignature, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import type { Language, TranslateFn } from './types';
+import type { ContractType, Language, TranslateFn } from './types';
 
 interface ContractHeaderProps {
   appLanguage: Language;
   setAppLanguage: (language: Language) => void;
   onQuickFill: () => void;
   t: TranslateFn;
+  contractType: ContractType;
+  setContractType: (value: ContractType) => void;
 }
 
-export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t }: ContractHeaderProps) {
+export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t, contractType, setContractType }: ContractHeaderProps) {
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -24,7 +26,7 @@ export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t }: 
             <span className="block text-[10px] font-medium uppercase tracking-wide text-slate-400">Lease Agreement Generator</span>
           </div>
         </div>
-        <div className="flex items-center space-x-2 sm:space-x-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center rounded-xl bg-slate-100 p-1">
             <button
               onClick={() => setAppLanguage('th')}
@@ -37,6 +39,38 @@ export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t }: 
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${appLanguage === 'en' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
             >
               EN (English)
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+            <button
+              onClick={() => setContractType('lease')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'lease' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              เช่า
+            </button>
+            <button
+              onClick={() => setContractType('vehicle-sale')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'vehicle-sale' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              ซื้อขายรถ
+            </button>
+            <button
+              onClick={() => setContractType('property-sale')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'property-sale' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              อสังหา
+            </button>
+            <button
+              onClick={() => setContractType('employment')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'employment' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              จ้างงาน
+            </button>
+            <button
+              onClick={() => setContractType('testament')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'testament' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              พินัยกรรม
             </button>
           </div>
           <Link

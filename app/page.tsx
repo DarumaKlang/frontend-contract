@@ -1,8 +1,6 @@
-'use client';
-
-import PageNew from './page.new';
+import LanddingPage from './landding/page';
 
 export default function Page() {
-    return <PageNew />;
+  return <LanddingPage />;
 }
 

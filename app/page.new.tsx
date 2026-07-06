@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { ArrowLeft, ArrowRight, PartyPopper, Scale } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, PartyPopper, Scale } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { ContractFooter } from './components/contract-generator/ContractFooter';
 import { ContractHeader } from './components/contract-generator/ContractHeader';
 import { ContractPreviewPanel } from './components/contract-generator/ContractPreviewPanel';
@@ -11,6 +12,7 @@ import { ContractToastStack } from './components/contract-generator/ContractToas
 import { useWizard } from './components/contract-generator/hooks/useWizard';
 
 export default function PageNew() {
+  const { user } = useAuth();
   const {
     appLanguage,
     setAppLanguage,
@@ -28,6 +30,8 @@ export default function PageNew() {
     handleDownload,
     t,
     getGeneratedHtml,
+    contractType,
+    setContractType,
   } = useWizard();
 
   const generatedHtml = getGeneratedHtml();
@@ -35,6 +39,10 @@ export default function PageNew() {
   const [hasPaid, setHasPaid] = useState<boolean>(false);
   const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+
+  // Check if user can access download/copy features
+  const isLoggedIn = !!user;
+  const canAccessFeatures = isLoggedIn && hasPaid;
 
   useEffect(() => {
     // Disable right‑click context menu
@@ -78,10 +86,34 @@ export default function PageNew() {
     }
   };
 
+  const handleSecureCopy = () => {
+    if (!isLoggedIn) {
+      alert('Please log in to copy the contract.');
+      return;
+    }
+    if (!hasPaid) {
+      alert('Please complete payment to copy the contract.');
+      return;
+    }
+    handleCopy();
+  };
+
+  const handleSecureDownload = () => {
+    if (!isLoggedIn) {
+      alert('Please log in to download the contract.');
+      return;
+    }
+    if (!hasPaid) {
+      alert('Please complete payment to download the contract.');
+      return;
+    }
+    handleDownload();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 antialiased">
       <ContractToastStack toasts={toasts} />
-      <ContractHeader appLanguage={appLanguage} setAppLanguage={setAppLanguage} onQuickFill={handleQuickFill} t={t} />
+      <ContractHeader appLanguage={appLanguage} setAppLanguage={setAppLanguage} onQuickFill={handleQuickFill} t={t} contractType={contractType} setContractType={setContractType} />
 
       <main className="mx-auto flex w-full max-w-7xl flex-grow flex-col px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto mb-10 max-w-3xl text-center">
@@ -123,6 +155,7 @@ export default function PageNew() {
                 formData={formData}
                 onFormChange={handleFormChange}
                 t={t}
+                contractType={contractType}
                 formatMoney={(amount) =>
                   new Intl.NumberFormat(appLanguage === 'th' ? 'th-TH' : 'en-US', {
                     minimumFractionDigits: 2,
@@ -137,10 +170,13 @@ export default function PageNew() {
                     appLanguage={appLanguage}
                     previewFormat={previewFormat}
                     setPreviewFormat={setPreviewFormat}
-                    onCopy={handleCopy}
-                    onDownload={handleDownload}
+                    onCopy={handleSecureCopy}
+                    onDownload={handleSecureDownload}
                     generatedHtml={generatedHtml}
                     t={t}
+                    isLocked={!canAccessFeatures}
+                    isLoggedIn={isLoggedIn}
+                    hasPaid={hasPaid}
                   />
                 </div>
               )}
@@ -155,7 +191,15 @@ export default function PageNew() {
                   <span>{t('btn-prev')}</span>
                 </button>
                 <div className="flex items-center gap-2">
-                  {hasPaid ? (
+                  {currentStep < 4 ? (
+                    <button
+                      onClick={handleNext}
+                      className="flex items-center gap-1.5 rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover:bg-sky-700"
+                    >
+                      <span>{t('btn-next')}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ) : hasPaid ? (
                     <button
                       onClick={handlePrint}
                       className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover:bg-emerald-700"

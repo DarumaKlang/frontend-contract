@@ -39,6 +39,7 @@ export default function PageNew() {
   const generatedHtml = getGeneratedHtml();
 
   const [hasPaid, setHasPaid] = useState<boolean>(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
   const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
@@ -65,6 +66,34 @@ export default function PageNew() {
       document.removeEventListener('contextmenu', blockContext);
     };
   }, [router, user]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const paymentStatus = window.localStorage.getItem('paymentStatus');
+    if (!paymentStatus) return;
+
+    const language = window.localStorage.getItem('appLanguage') === 'th' ? 'th' : 'en';
+    if (paymentStatus === 'success') {
+      setPaymentMessage(
+        language === 'th'
+          ? 'ชำระเงินสำเร็จแล้ว คุณสามารถดาวน์โหลดหรือคัดลอกสัญญาได้'
+          : 'Payment successful. You can now download or copy your contract.'
+      );
+      setHasPaid(true);
+    } else if (paymentStatus === 'cancel') {
+      setPaymentMessage(
+        language === 'th'
+          ? 'การชำระเงินถูกยกเลิก คุณสามารถลองใหม่อีกครั้งได้'
+          : 'Payment was canceled. You can try again.'
+      );
+    }
+
+    const hideTimer = window.setTimeout(() => setPaymentMessage(''), 7000);
+    window.localStorage.removeItem('paymentStatus');
+
+    return () => window.clearTimeout(hideTimer);
+  }, []);
 
   const handlePay = async () => {
     if (!stripePromise) {
@@ -123,6 +152,11 @@ export default function PageNew() {
     <div className="min-h-screen bg-slate-50 text-slate-800 antialiased">
       <ContractToastStack toasts={toasts} />
       <ContractHeader appLanguage={appLanguage} setAppLanguage={setAppLanguage} onQuickFill={handleQuickFill} t={t} contractType={contractType} setContractType={setContractType} />
+      {paymentMessage && (
+        <div className="mx-auto mb-6 max-w-7xl rounded-3xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-slate-800 shadow-sm">
+          <p className="text-sm font-semibold">{paymentMessage}</p>
+        </div>
+      )}
 
       <main className="mx-auto flex w-full max-w-7xl flex-grow flex-col px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto mb-10 max-w-3xl text-center">
@@ -136,7 +170,7 @@ export default function PageNew() {
         </div>
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-          <ContractSidebar currentStep={currentStep} onGoToStep={handleGoToStep} t={t} />
+          <ContractSidebar currentStep={currentStep} onGoToStep={handleGoToStep} t={t} contractType={contractType} />
 
           <div className="lg:col-span-8">
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

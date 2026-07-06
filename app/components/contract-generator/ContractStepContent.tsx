@@ -39,13 +39,49 @@ export function ContractStepContent({ currentStep, appLanguage, formData, onForm
     ? (appLanguage === 'th' ? 'ข้อมูลฝ่ายจ้างงาน' : 'Employment Details')
     : contractType === 'testament'
     ? (appLanguage === 'th' ? 'ข้อมูลผู้ทำพินัยกรรม' : 'Testament Details')
+    : contractType === 'vehicle-sale' || contractType === 'property-sale'
+    ? (appLanguage === 'th' ? 'ข้อมูลฝ่ายผู้ขาย' : 'Seller Details')
     : t('section-seller');
 
   const counterpartyTitle = contractType === 'employment'
     ? (appLanguage === 'th' ? 'ข้อมูลพนักงาน' : 'Employee Details')
     : contractType === 'testament'
     ? (appLanguage === 'th' ? 'ข้อมูลผู้รับผลประโยชน์' : 'Beneficiary Details')
+    : contractType === 'vehicle-sale' || contractType === 'property-sale'
+    ? (appLanguage === 'th' ? 'ข้อมูลฝ่ายผู้ซื้อ' : 'Buyer Details')
     : t('section-buyer');
+
+  const sellerFieldLabel = contractType === 'vehicle-sale' || contractType === 'property-sale'
+    ? (appLanguage === 'th' ? 'ชื่อผู้ขาย' : 'Seller name')
+    : contractType === 'employment'
+    ? (appLanguage === 'th' ? 'ชื่อบริษัทหรือชื่อผู้ว่าจ้าง' : 'Employer or company name')
+    : contractType === 'testament'
+    ? (appLanguage === 'th' ? 'ชื่อผู้ทำพินัยกรรม' : 'Testator full name')
+    : t('lbl-name');
+
+  const buyerFieldLabel = contractType === 'vehicle-sale' || contractType === 'property-sale'
+    ? (appLanguage === 'th' ? 'ชื่อผู้ซื้อ' : 'Buyer name')
+    : contractType === 'employment'
+    ? (appLanguage === 'th' ? 'ชื่อพนักงานหรือผู้รับจ้าง' : 'Employee or contractor name')
+    : contractType === 'testament'
+    ? (appLanguage === 'th' ? 'ชื่อผู้รับผลประโยชน์' : 'Beneficiary name')
+    : t('lbl-name');
+
+  const sellerPlaceholder = contractType === 'vehicle-sale' || contractType === 'property-sale'
+    ? (appLanguage === 'th' ? 'ชื่อ-นามสกุล ผู้ขาย' : 'Seller full name')
+    : contractType === 'employment'
+    ? (appLanguage === 'th' ? 'ชื่อบริษัทหรือชื่อผู้ว่าจ้าง' : 'Employer or company name')
+    : contractType === 'testament'
+    ? (appLanguage === 'th' ? 'ชื่อผู้ทำพินัยกรรม' : 'Testator full name')
+    : (appLanguage === 'th' ? 'ชื่อผู้ให้เช่า หรือบริษัทผู้ให้เช่า' : 'Landlord or company name');
+
+  const buyerPlaceholder = contractType === 'vehicle-sale' || contractType === 'property-sale'
+    ? (appLanguage === 'th' ? 'ชื่อ-นามสกุล ผู้ซื้อ' : 'Buyer full name')
+    : contractType === 'employment'
+    ? (appLanguage === 'th' ? 'ชื่อพนักงานหรือผู้รับจ้าง' : 'Employee or contractor name')
+    : contractType === 'testament'
+    ? (appLanguage === 'th' ? 'ชื่อผู้รับผลประโยชน์' : 'Beneficiary name')
+    : (appLanguage === 'th' ? 'ชื่อผู้เช่า หรือบริษัทผู้เช่า' : 'Tenant or company name');
 
   return (
     <div className="p-6 sm:p-8">
@@ -57,16 +93,12 @@ export function ContractStepContent({ currentStep, appLanguage, formData, onForm
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">{sectionTitle}</h3>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField label={t('lbl-name')} required>
+              <FormField label={sellerFieldLabel} required>
                 <input
                   value={formData.sellerName}
                   onChange={(e) => onFormChange('sellerName', e.target.value)}
                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none transition-all focus:border-sky-500 focus:ring-2 focus:ring-sky-500"
-                  placeholder={contractType === 'employment'
-                    ? (appLanguage === 'th' ? 'ชื่อบริษัทหรือชื่อผู้ว่าจ้าง' : 'Employer or Company Name')
-                    : contractType === 'testament'
-                    ? (appLanguage === 'th' ? 'ชื่อผู้ทำพินัยกรรม' : 'Testator Full Name')
-                    : (appLanguage === 'th' ? 'ชื่อผู้ให้เช่า หรือบริษัทผู้ให้เช่า' : 'Landlord or Company Name')}
+                  placeholder={sellerPlaceholder}
                 />
               </FormField>
               <FormField label={t('lbl-tax-id')} required>
@@ -104,16 +136,12 @@ export function ContractStepContent({ currentStep, appLanguage, formData, onForm
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">{counterpartyTitle}</h3>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField label={t('lbl-name')} required>
+              <FormField label={buyerFieldLabel} required>
                 <input
                   value={formData.buyerName}
                   onChange={(e) => onFormChange('buyerName', e.target.value)}
                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none transition-all focus:border-sky-500 focus:ring-2 focus:ring-sky-500"
-                  placeholder={contractType === 'employment'
-                    ? (appLanguage === 'th' ? 'ชื่อพนักงานหรือผู้รับจ้าง' : 'Employee or Contractor Name')
-                    : contractType === 'testament'
-                    ? (appLanguage === 'th' ? 'ชื่อผู้รับผลประโยชน์' : 'Beneficiary Name')
-                    : (appLanguage === 'th' ? 'ชื่อผู้เช่า หรือบริษัทผู้เช่า' : 'Tenant or Company Name')}
+                  placeholder={buyerPlaceholder}
                 />
               </FormField>
               <FormField label={t('lbl-tax-id')} required>

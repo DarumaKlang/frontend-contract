@@ -1,0 +1,6 @@
+-- 004_create_payments_indexes_concurrent.sql
+-- Migration: SKIPPED
+-- Indexes are already created in 003_create_payments.sql
+-- This migration file was intended for zero-downtime concurrent index creation,
+-- but indexes are created atomically in the main table creation (003).
+-- Kept as documentation of the original intent.

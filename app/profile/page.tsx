@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CreditCard, ShieldCheck, Wallet } from 'lucide-react';
 import { useAuth, isAdminEmail } from '@/lib/auth-context';
+import { getProfilePrintQuota, type ProfilePrintQuota } from '@/lib/printQuota';
 
 interface SavedContract {
   id: string;
@@ -52,6 +53,7 @@ export default function Profile() {
   const [billingForm, setBillingForm] = useState<BillingProfile>(emptyBillingForm);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [printQuota, setPrintQuota] = useState<ProfilePrintQuota>(() => getProfilePrintQuota(null));
 
   useEffect(() => {
     if (!user) {
@@ -88,6 +90,7 @@ export default function Profile() {
         const data = await profileRes.json();
         const nextProfile = data.profile ?? null;
         setProfile(nextProfile);
+        setPrintQuota(getProfilePrintQuota(nextProfile));
         const storedBilling = (nextProfile?.billing_profile ?? (nextProfile?.frequent_profile_data as Record<string, unknown> | undefined)?.billing_profile ?? {}) as BillingProfile;
         setBillingForm({
           ...emptyBillingForm,
@@ -129,7 +132,9 @@ export default function Profile() {
 
     if (res.ok) {
       const data = await res.json();
-      setProfile(data.profile ?? null);
+      const nextProfile = data.profile ?? null;
+      setProfile(nextProfile);
+      setPrintQuota(getProfilePrintQuota(nextProfile));
       setMessage('ข้อมูลการชำระเงินถูกบันทึกเรียบร้อยแล้ว');
     } else {
       setMessage('บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่');
@@ -180,6 +185,11 @@ export default function Profile() {
             <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
               <div className="text-sm text-amber-700">สถานะการสมัคร</div>
               <div className="mt-2 text-xl font-bold text-amber-900">{profile?.onboarding_completed ? 'พร้อมชำระ' : 'ยังไม่เสร็จ'}</div>
+            </div>
+            <div className="rounded-[24px] border border-violet-200 bg-violet-50 p-4">
+              <div className="text-sm text-violet-700">โควต้าการดาวน์โหลดเดือนนี้</div>
+              <div className="mt-2 text-xl font-bold text-violet-900">{printQuota.remaining} / {printQuota.total}</div>
+              <div className="mt-1 text-xs text-violet-700">แผน {printQuota.plan} · {printQuota.month}</div>
             </div>
           </div>
         </div>

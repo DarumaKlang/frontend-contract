@@ -16,13 +16,37 @@ const LOCALIZATION = {
     'btn-quick-fill': 'กรอกสัญญาตัวอย่าง',
     'nav-steps-title': 'ขั้นตอนการทำสัญญา',
     'step1-nav-title': 'ข้อมูลคู่สัญญา',
-    'step1-nav-desc': 'รายละเอียดผู้ให้เช่าและผู้เช่า',
-    'step2-nav-title': 'ข้อมูลทรัพย์สิน & ค่าเช่า',
-    'step2-nav-desc': 'ระบุยูนิตค่าเช่า ค่าเช่ารายเดือน และเงินมัดจำ',
-    'step3-nav-title': 'เริ่มสัญญา & การชำระเงิน',
-    'step3-nav-desc': 'กำหนดวันเริ่มสัญญา เงื่อนไขการชำระ และเบี้ยปรับล่าช้า',
-    'step4-nav-title': 'ตรวจสอบ & ส่งออก',
-    'step4-nav-desc': 'แสดงตัวอย่างสัญญา คัดลอก และดาวน์โหลด',
+    'step1-nav-desc': 'กรอกชื่อ ที่อยู่ และข้อมูลผู้ลงนาม',
+    'step1-nav-title-vehicle-sale': 'ข้อมูลผู้ขายและผู้ซื้อ',
+    'step1-nav-desc-vehicle-sale': 'ระบุชื่อ ที่อยู่ และผู้รับมอบอำนาจสำหรับการขายรถยนต์',
+    'step1-nav-title-property-sale': 'ข้อมูลผู้ขายและผู้ซื้อ',
+    'step1-nav-desc-property-sale': 'ระบุชื่อ ที่อยู่ และผู้รับมอบอำนาจสำหรับอสังหาริมทรัพย์',
+    'step1-nav-title-employment': 'ข้อมูลนายจ้างและลูกจ้าง',
+    'step1-nav-desc-employment': 'ระบุชื่อ ที่อยู่ และตำแหน่งงานของทั้งสองฝ่าย',
+    'step1-nav-title-testament': 'ข้อมูลผู้จัดการและผู้รับมรดก',
+    'step1-nav-desc-testament': 'ระบุชื่อผู้ทำพินัยกรรม ผู้จัดการ และผู้รับผลประโยชน์',
+    'step2-nav-title': 'รายละเอียดสัญญา',
+    'step2-nav-desc': 'กรอกสินทรัพย์ ตำแหน่งงาน หรือพินัยกรรมตามประเภทสัญญา',
+    'step2-nav-title-vehicle-sale': 'รายละเอียดรถยนต์',
+    'step2-nav-desc-vehicle-sale': 'กรอกรุ่น ปี เลขทะเบียน และราคาขาย',
+    'step2-nav-title-property-sale': 'รายละเอียดอสังหาริมทรัพย์',
+    'step2-nav-desc-property-sale': 'กรอกรายละเอียดที่ตั้ง เนื้อที่ และราคาขาย',
+    'step2-nav-title-employment': 'รายละเอียดงานและค่าตอบแทน',
+    'step2-nav-desc-employment': 'ระบุตำแหน่ง เงินเดือน เวลาเริ่มงาน และสวัสดิการ',
+    'step2-nav-title-testament': 'รายละเอียดพินัยกรรม',
+    'step2-nav-desc-testament': 'ระบุทรัพย์สิน ผู้รับประโยชน์ และพยาน',
+    'step3-nav-title': 'เงื่อนไขและวันลงนาม',
+    'step3-nav-desc': 'กำหนดวันทำสัญญา เงื่อนไขการส่งมอบหรือชำระเงิน และที่ตั้งสัญญา',
+    'step3-nav-title-vehicle-sale': 'การโอนรถ & การชำระเงิน',
+    'step3-nav-desc-vehicle-sale': 'กำหนดวันโอนกรรมสิทธิ์ การส่งมอบรถ และวิธีชำระเงิน',
+    'step3-nav-title-property-sale': 'การโอนกรรมสิทธิ์ & การชำระเงิน',
+    'step3-nav-desc-property-sale': 'กำหนดวันโอนกรรมสิทธิ์ สถานที่โอน และวิธีชำระเงิน',
+    'step3-nav-title-employment': 'เงื่อนไขการจ้างงาน',
+    'step3-nav-desc-employment': 'กำหนดวันที่เริ่มงาน สถานที่ทำงาน และเงื่อนไขการชำระเงิน',
+    'step3-nav-title-testament': 'เงื่อนไขพินัยกรรม',
+    'step3-nav-desc-testament': 'กำหนดวันที่ลงนาม พยาน และการแบ่งมรดก',
+    'step4-nav-title': 'ทบทวน & ส่งออก',
+    'step4-nav-desc': 'ตรวจสอบสัญญา คัดลอก หรือดาวน์โหลด',
     'disclaimer-title': 'ข้อแนะนำทางกฎหมาย:',
     'disclaimer-text': 'สัญญานี้เป็นร่างสัญญามาตรฐานเบื้องต้น ควรปรึกษาทนายความหรือผู้เชี่ยวชาญหากเป็นการเช่าที่มีเงื่อนไขพิเศษหรือมูลค่าสูง',
     'step1-header-title': 'ข้อมูลคู่สัญญาและที่อยู่ผู้มีส่วนได้เสีย',
@@ -82,11 +106,35 @@ const LOCALIZATION = {
     'btn-quick-fill': 'Quick Demo Fill',
     'nav-steps-title': 'AGREEMENT WORKFLOW',
     'step1-nav-title': 'Parties Details',
-    'step1-nav-desc': 'Landlord and Tenant identities',
-    'step2-nav-title': 'Property & Rent',
-    'step2-nav-desc': 'Specify the rented unit, monthly rent, and security deposit',
-    'step3-nav-title': 'Lease Start & Payments',
-    'step3-nav-desc': 'Start date, rent schedule and late payment penalties',
+    'step1-nav-desc': 'Enter names, addresses, and signing parties',
+    'step1-nav-title-vehicle-sale': 'Seller and Buyer Details',
+    'step1-nav-desc-vehicle-sale': 'Enter seller, buyer, and authorized representative information for the vehicle sale',
+    'step1-nav-title-property-sale': 'Seller and Buyer Details',
+    'step1-nav-desc-property-sale': 'Enter seller, buyer, and authorized representative information for the property sale',
+    'step1-nav-title-employment': 'Employer and Employee Details',
+    'step1-nav-desc-employment': 'Enter employer, employee, and job role information',
+    'step1-nav-title-testament': 'Testator and Beneficiary Details',
+    'step1-nav-desc-testament': 'Enter the testator, executor, and beneficiary details',
+    'step2-nav-title': 'Contract Details',
+    'step2-nav-desc': 'Enter asset, job, or testament details according to the contract type',
+    'step2-nav-title-vehicle-sale': 'Vehicle Details',
+    'step2-nav-desc-vehicle-sale': 'Enter make, model, plate, year, and sale price',
+    'step2-nav-title-property-sale': 'Property Details',
+    'step2-nav-desc-property-sale': 'Enter property address, area, floor, and sale price',
+    'step2-nav-title-employment': 'Job & Compensation Details',
+    'step2-nav-desc-employment': 'Specify position, salary, start date, and benefits',
+    'step2-nav-title-testament': 'Will Details',
+    'step2-nav-desc-testament': 'Specify assets, beneficiaries, and witnesses',
+    'step3-nav-title': 'Contract Dates & Terms',
+    'step3-nav-desc': 'Set signature date, delivery/payment terms, and contract location',
+    'step3-nav-title-vehicle-sale': 'Vehicle Transfer & Payment',
+    'step3-nav-desc-vehicle-sale': 'Set ownership transfer date, delivery method, and payment terms',
+    'step3-nav-title-property-sale': 'Ownership Transfer & Payment',
+    'step3-nav-desc-property-sale': 'Set transfer date, registration location, and payment terms',
+    'step3-nav-title-employment': 'Employment Terms',
+    'step3-nav-desc-employment': 'Set start date, work location, and payment terms',
+    'step3-nav-title-testament': 'Will Execution Terms',
+    'step3-nav-desc-testament': 'Set signing date, witnesses, and inheritance terms',
     'step4-nav-title': 'Review & Export',
     'step4-nav-desc': 'Preview document and download',
     'disclaimer-title': 'Legal Notice:',
@@ -280,11 +328,26 @@ export function useWizard() {
     showToast(t('drive-upload-success') ?? 'Uploaded to Google Drive', 'success');
     // optional: store the pdfUrl in contract record (handled server‑side)
   };
-  const [appLanguage, setAppLanguage] = useState<Language>('th');
+  const [appLanguage, setAppLanguageState] = useState<Language>('th');
+  const setAppLanguage = (language: Language) => {
+    setAppLanguageState(language);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('appLanguage', language);
+    }
+  };
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [previewFormat, setPreviewFormat] = useState<PreviewFormat>('rich');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [formData, setFormData] = useState<ContractData>(getInitialFormData);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedLanguage = window.localStorage.getItem('appLanguage');
+      if (savedLanguage === 'th' || savedLanguage === 'en') {
+        setAppLanguageState(savedLanguage);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const today = new Date();

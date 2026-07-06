@@ -7,12 +7,13 @@ app.use(express.json());
 
 app.post('/create-checkout-session', async (req, res) => {
   try {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || process.env.DOMAIN || req.headers.origin || 'https://contract-generator.com';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
       mode: 'payment',
-      success_url: `${req.headers.origin}/print-success.html`,
-      cancel_url: `${req.headers.origin}/print-cancel.html`,
+      success_url: `${site.replace(/\/+$/, '')}/print-success`,
+      cancel_url: `${site.replace(/\/+$/, '')}/print-cancel`,
     });
     res.json({ sessionId: session.id });
   } catch (err) {

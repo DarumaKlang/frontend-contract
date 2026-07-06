@@ -61,7 +61,8 @@ async function createCheckoutSession(origin: string) {
 
 export async function POST(request: Request) {
   try {
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
+    const envSite = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.DOMAIN;
+    const origin = envSite || request.headers.get('origin') || 'https://contract-generator.com';
     const session = await createCheckoutSession(origin);
     return NextResponse.json({ sessionId: session.id });
   } catch (error: any) {

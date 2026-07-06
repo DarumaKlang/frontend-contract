@@ -1,4 +1,3 @@
-import * as cookie from 'cookie';
 import type { NextRequest } from 'next/server';
 
 export interface User {
@@ -31,30 +30,17 @@ export const verifyPassword = (user: User, password: string) => user.password ==
 
 export const SESSION_COOKIE = 'session_id';
 
+const buildSetCookieHeader = (name: string, value: string, maxAge: number) => {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `${name}=${encodeURIComponent(value)}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
+};
+
 export const setSessionCookie = (res: Response, userId: string) => {
-  const cookieHeader = cookie.stringifySetCookie({
-    name: SESSION_COOKIE,
-    value: userId,
-    httpOnly: true,
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
-  res.headers.set('Set-Cookie', cookieHeader);
+  res.headers.set('Set-Cookie', buildSetCookieHeader(SESSION_COOKIE, userId, 60 * 60 * 24 * 7));
 };
 
 export const clearSessionCookie = (res: Response) => {
-  const cookieHeader = cookie.stringifySetCookie({
-    name: SESSION_COOKIE,
-    value: '',
-    httpOnly: true,
-    path: '/',
-    maxAge: 0,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
-  res.headers.set('Set-Cookie', cookieHeader);
+  res.headers.set('Set-Cookie', buildSetCookieHeader(SESSION_COOKIE, '', 0));
 };
 
 export const getSessionUserId = (req: NextRequest): string | null => {

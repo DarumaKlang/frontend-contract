@@ -22,13 +22,13 @@ This repository is a Next.js app router project for generating contract and leas
 ```bash
 pnpm install
 ```
-
+2. Create a `.env` file in the repo root with your Stripe credentials and Supabase values (update DOMAIN as needed):
 2. Create a `.env` file in the repo root with your Stripe credentials and Supabase values:
 
 ```dotenv
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 STRIPE_SECRET_KEY=sk_test_xxx
-PRICE_ID=price_xxx
+DOMAIN=https://contract-generator.com
 DOMAIN=http://localhost:3000
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 
@@ -45,7 +45,7 @@ NEXT_PUBLIC_SUPABASE_REDIRECT_URL=http://localhost:3000/auth/callback
 ```bash
 pnpm dev
 ```
-
+4. Open the app in your browser at `https://contract-generator.com` (after deployment).
 4. Open the app in your browser at `http://localhost:3000`.
 
 ## Supabase integration
@@ -104,7 +104,7 @@ The app expects these values in `.env`:
 
 ### API route test
 
-```bash
+curl -i -X POST https://contract-generator.com/api/create-checkout-session
 curl -i -X POST http://localhost:3000/api/create-checkout-session
 ```
 

@@ -1,17 +1,26 @@
 import { Check, ShieldAlert } from 'lucide-react';
-import type { TranslateFn } from './types';
+import type { ContractType, TranslateFn } from './types';
 
 interface ContractSidebarProps {
   currentStep: number;
   onGoToStep: (stepNum: number) => void;
   t: TranslateFn;
+  contractType: ContractType;
 }
 
-export function ContractSidebar({ currentStep, onGoToStep, t }: ContractSidebarProps) {
+export function ContractSidebar({ currentStep, onGoToStep, t, contractType }: ContractSidebarProps) {
+  const getStepText = (baseKey: string) => {
+    if (contractType !== 'lease') {
+      const typed = t(`${baseKey}-${contractType}`);
+      if (typed) return typed;
+    }
+    return t(baseKey);
+  };
+
   const steps = [
-    { num: 1, title: t('step1-nav-title'), desc: t('step1-nav-desc') },
-    { num: 2, title: t('step2-nav-title'), desc: t('step2-nav-desc') },
-    { num: 3, title: t('step3-nav-title'), desc: t('step3-nav-desc') },
+    { num: 1, title: getStepText('step1-nav-title'), desc: getStepText('step1-nav-desc') },
+    { num: 2, title: getStepText('step2-nav-title'), desc: getStepText('step2-nav-desc') },
+    { num: 3, title: getStepText('step3-nav-title'), desc: getStepText('step3-nav-desc') },
     { num: 4, title: t('step4-nav-title'), desc: t('step4-nav-desc') }
   ];
 

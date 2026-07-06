@@ -14,8 +14,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "next-fontend",
-  description: "Premium UI with simple auth",
+  title: "Contract Generator",
+  description: "Generate legal contracts and documents quickly and securely.",
+  metadataBase: new URL('https://contract-generator.com'),
+  canonical: 'https://contract-generator.com',
+  openGraph: {
+    type: 'website',
+    url: 'https://contract-generator.com',
+    title: 'Contract Generator',
+    description: 'Generate legal contracts and documents quickly and securely.',
+    images: [
+      {
+        url: 'https://contract-generator.com/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Contract Generator',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Contract Generator',
+    description: 'Generate legal contracts and documents quickly and securely.',
+    site: '@ContractGen',
+  },
 };
 
 export default function RootLayout({

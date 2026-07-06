@@ -1,127 +1,269 @@
 // app/admin/page.tsx
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+type User = {
+  id: string;
+  email?: string;
+  name?: string;
+  active?: boolean;
+  role?: string;
+};
 
 export default function AdminPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [revenue, setRevenue] = useState<any>(null);
+  const [loadingRevenue, setLoadingRevenue] = useState(false);
+  const [message, setMessage] = useState('');
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const token = localStorage.getItem('auth_token');
+    setAuthToken(token);
+
+    if (!token) {
+      setMessage('Admin access requires signing in. Please log in with an admin account.');
+      return;
+    }
+
+    fetchUsers(token);
+    fetchRevenue(token);
+  }, []);
+
+  async function fetchUsers(token: string) {
+    setLoadingUsers(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(data?.error || 'Failed to load users');
+        return;
+      }
+      setUsers(data?.users || []);
+    } catch (err) {
+      console.error(err);
+      setMessage('Failed to load users');
+    } finally {
+      setLoadingUsers(false);
+    }
+  }
+
+  async function patchUser(id: string, patch: Record<string, any>) {
+    if (!authToken) {
+      setMessage('Unable to update user without admin authorization.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage('Updated user');
+        fetchUsers(authToken);
+      } else {
+        setMessage(data?.error || 'Update failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage('Failed to update user');
+    }
+  }
+
+  async function deleteUser(id: string) {
+    if (!authToken) {
+      setMessage('Unable to delete user without admin authorization.');
+      return;
+    }
+
+    if (!confirm('Delete this user?')) return;
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage('User deleted');
+        fetchUsers(authToken);
+      } else {
+        setMessage(data?.error || 'Delete failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage('Failed to delete user');
+    }
+  }
+
+  async function fetchRevenue(days = 30) {
+    if (!authToken) {
+      setMessage('Unable to load revenue without admin authorization.');
+      return;
+    }
+
+    setLoadingRevenue(true);
+    try {
+      const res = await fetch(`/api/admin/revenue?days=${days}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) setRevenue(data);
+      else setMessage(data?.error || 'Failed to fetch revenue');
+    } catch (err) {
+      console.error(err);
+      setMessage('Failed to load revenue');
+    } finally {
+      setLoadingRevenue(false);
+    }
+  }
+
+  function exportCsv(rev: any) {
+    // Build CSV rows from revenue object – this is simple because backend stores totals only.
+    const rows = [
+      ['days', 'count', 'total', 'currency'],
+      [String(rev.days), String(rev.count), String(rev.total), String(rev.currency)],
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `revenue_${rev.days}d.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const RevenueChart = dynamic(() => import('./components/admin/RevenueChart').then(m => m.RevenueChart), { ssr: false });
+
   return (
-    <main className="prose prose-slate mx-auto min-h-screen px-6 py-10 text-slate-900">
-      <h1>Admin Manual</h1>
-      <p>
-        คู่มือสำหรับผู้ดูแลระบบและนักพัฒนาที่ต้องการขยายฟีเจอร์สัญญาในอนาคต
-        เช่น เพิ่มแบบสัญญาใหม่ แก้ไขข้อมูลสัญญา หรือปรับค่า Stripe และ template
-      </p>
+    <main className="mx-auto min-h-screen px-6 py-10 text-slate-900 max-w-6xl">
+      <h1 className="text-2xl font-bold mb-4">Admin Console</h1>
 
-      <h2>1. สถานะปัจจุบัน</h2>
-      <ul>
-        <li>ปัจจุบันระบบมีสัญญาเพียงฉบับเดียว</li>
-        <li>สัญญาถูกสร้างจากข้อมูลฟอร์มใน `app/page.new.tsx`</li>
-        <li>ฟอร์มสัญญาและ logic อยู่ใน `app/components/contract-generator/`</li>
-        <li>การชำระเงินใช้ Stripe Checkout ผ่าน `app/api/create-checkout-session/route.ts`</li>
-      </ul>
+      {message && <div className="mb-4 rounded-md bg-amber-50 p-3 text-amber-800">{message}</div>}
 
-      <h2>2. หากต้องการแก้ไขข้อมูลสัญญา</h2>
-      <p>การแก้ไขข้อมูลสัญญาแบ่งเป็นสองระดับ:</p>
-      <ol>
-        <li>
-          <strong>แก้ค่าเริ่มต้น</strong> - ถ้าอยากเปลี่ยนค่า default, sample หรือข้อความในฟอร์ม
-          ให้แก้ที่ `getInitialFormData()` และ `handleQuickFill()` ใน
-          `app/components/contract-generator/hooks/useWizard.ts`
-        </li>
-        <li>
-          <strong>แก้ฟิลด์สัญญา</strong> - ถ้าต้องการเพิ่ม/ลบฟิลด์สัญญา เช่น เพิ่มช่องข้อมูลผู้รับมอบอำนาจ
-          ให้ปรับดังนี้:
-          <ul>
-            <li>อัพเดต `ContractData` ใน `app/components/contract-generator/types.ts`</li>
-            <li>เพิ่ม form input ใน `app/components/contract-generator/ContractStepContent.tsx`</li>
-            <li>เพิ่ม label/placeholder ใน localization object ของ `useWizard.ts`</li>
-            <li>แก้ `generateContractHTML()` ใน `useWizard.ts` เพื่อใส่ข้อมูลใหม่ลงในเอกสาร</li>
-          </ul>
-        </li>
-      </ol>
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold">Help & Manual</h2>
+        <p className="mt-2 text-slate-700">คู่มือสั้น ๆ สำหรับผู้ดูแลระบบ (ข้อมูลเชิงเทคนิคและขั้นตอนการขยายฟีเจอร์)</p>
+        <details className="mt-3 prose">
+          <summary className="cursor-pointer font-semibold">เปิดคู่มือ</summary>
+          <div>
+            <p>หน้า admin เดิมเป็นคู่มือเชิงเทคนิค — ใช้เพื่อดูว่าฟีเจอร์ต่าง ๆ ถูกเก็บไว้ที่ใด</p>
+            <ul>
+              <li>แก้แบบฟอร์มใน <code>app/components/contract-generator/</code></li>
+              <li>จัดการ Stripe ใน <code>app/api/create-checkout-session/route.ts</code></li>
+              <li>การยืนยันการชำระเงินระยะยาวควรใช้ Webhook</li>
+            </ul>
+          </div>
+        </details>
+      </section>
 
-      <h2>3. หากต้องการเพิ่มสัญญาใหม่</h2>
-      <p>
-        ระบบตอนนี้ออกแบบให้สร้างสัญญาเดียวจากแบบฟอร์มเดียว หากต้องการรองรับหลายสัญญา
-        จะต้องออกแบบโครงสร้างใหม่เล็กน้อย:
-      </p>
-      <ol>
-        <li>
-          เพิ่มตัวแปร `contractType` หรือ `templateType` ใน `ContractData` หรือ state
-          เพื่อแยกประเภทสัญญา
-        </li>
-        <li>
-          สร้างไฟล์ template ใหม่ เช่น `app/components/contract-generator/templates/` เพื่อเก็บ
-          HTML generator แต่ละสัญญา
-        </li>
-        <li>
-          ขยาย `ContractSidebar.tsx` และ `ContractStepContent.tsx` เพื่อให้เลือกสัญญา
-          และแสดงฟิลด์เฉพาะตามสัญญาที่เลือก
-        </li>
-        <li>
-          แยก logic การสร้าง HTML ใน `useWizard.ts` เช่น `generateContractHTML()` ให้รองรับ
-          template หลายแบบตาม `contractType`
-        </li>
-        <li>
-          อัพเดต `app/docs/page.tsx` หรือคู่มือ admin เพื่อเพิ่มคำอธิบาย template ใหม่
-        </li>
-      </ol>
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold">User Management</h2>
+        <div className="mt-3 rounded-md border bg-white p-4">
+          {loadingUsers ? (
+            <div>Loading users...</div>
+          ) : (
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="text-left text-sm text-slate-600">
+                  <th className="py-2">Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-t">
+                    <td className="py-2 text-sm">{u.name || '—'}</td>
+                    <td className="text-sm">{u.email || '—'}</td>
+                    <td className="text-sm">{u.role || 'user'}</td>
+                    <td className="text-sm">{u.active ? 'Yes' : 'No'}</td>
+                    <td className="text-sm">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => patchUser(u.id, { active: !u.active })}
+                          className="rounded px-2 py-1 bg-sky-600 text-white text-xs"
+                        >
+                          {u.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => patchUser(u.id, { role: u.role === 'admin' ? 'user' : 'admin' })}
+                          className="rounded px-2 py-1 bg-emerald-600 text-white text-xs"
+                        >
+                          {u.role === 'admin' ? 'Demote' : 'Promote'}
+                        </button>
+                        <button
+                          onClick={() => deleteUser(u.id)}
+                          className="rounded px-2 py-1 bg-rose-600 text-white text-xs"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
 
-      <h2>4. ไฟล์ที่ต้องแก้เมื่อต้องการเพิ่มสัญญาใหม่</h2>
-      <ul>
-        <li>`app/components/contract-generator/types.ts` - กำหนดข้อมูลสัญญาที่จะเก็บ</li>
-        <li>`app/components/contract-generator/hooks/useWizard.ts` - เก็บ state, localization,
-          และฟังก์ชันสร้าง HTML</li>
-        <li>`app/components/contract-generator/ContractStepContent.tsx` - แบบฟอร์มข้อมูลสัญญา</li>
-        <li>`app/components/contract-generator/ContractSidebar.tsx` - navigation ของขั้นตอน</li>
-        <li>`app/page.new.tsx` - หน้า UI หลักและปุ่มจ่ายเงิน</li>
-      </ul>
-
-      <h2>5. วิธีเพิ่มฟิลด์สัญญาใหม่</h2>
-      <p>ตัวอย่างขั้นตอนทั่วไป:</p>
-      <ol>
-        <li>เพิ่ม property ใหม่ใน `ContractData` เช่น `agentName: string`</li>
-        <li>เพิ่ม input field ใน `ContractStepContent.tsx` พร้อม label และ placeholder</li>
-        <li>เพิ่ม key localization สำหรับชื่อ label ใน `useWizard.ts`</li>
-        <li>แก้ `generateContractHTML()` เพื่อแสดงข้อมูลใหม่ในเอกสาร</li>
-        <li>ทดสอบว่า preview, copy, download และ print แสดงข้อมูลใหม่ถูกต้อง</li>
-      </ol>
-
-      <h2>6. วิธีเพิ่มสัญญาใหม่แบบหลาย template</h2>
-      <p>ถ้าจะเพิ่มสัญญาใหม่ ควรทำแบบแยก template ดังนี้:</p>
-      <ul>
-        <li>สร้าง `contractType` ใน state เพื่อเลือกแบบสัญญา</li>
-        <li>สร้างชุดฟิลด์เฉพาะสำหรับแต่ละแบบสัญญา</li>
-        <li>เก็บ template HTML เป็นฟังก์ชันแยก เช่น `renderLeaseAgreement()` และ `renderSaleAgreement()`</li>
-        <li>แสดงตัวเลือกสัญญาในหน้า UI ก่อนเข้าสู่ฟอร์ม</li>
-      </ul>
-
-      <h2>7. การจัดการราคาหรือ Stripe ในอนาคต</h2>
-      <p>หากสัญญาแต่ละแบบมีราคาต่างกัน:</p>
-      <ul>
-        <li>เพิ่ม `priceId` สำหรับแต่ละ template</li>
-        <li>อาจเก็บเป็น object หรือ map ใน `.env` และ `app/api/create-checkout-session/route.ts`</li>
-        <li>เมื่อมีหลายสัญญา ให้ส่ง `contractType` หรือ `priceKey` มายัง API route เพื่อเลือกราคา</li>
-      </ul>
-      <p>
-        ตัวอย่างโครงสร้างค่าใน `.env` แบบง่ายสำหรับหลายราคา:
-      </p>
-      <pre>
-PRICE_ID_LEASE=price_xxx
-PRICE_ID_RENTER=price_yyy
-      </pre>
-
-      <h2>8. คำแนะนำการดูแลหน้า admin</h2>
-      <ul>
-        <li>หากต้องการให้ admin แก้สัญญาได้ใน UI, คุณอาจสร้างระบบหลังบ้านที่เก็บ template และข้อมูลในฐานข้อมูล</li>
-        <li>ปัจจุบันหน้านี้ยังเป็นคู่มือเชิงเทคนิค ไม่ได้เก็บข้อมูลจริง</li>
-        <li>สำหรับแอดมินที่ไม่ใช่นักพัฒนา ให้ใช้คู่มือนี้เพื่อเข้าใจว่าต้องแก้ไฟล์ใด</li>
-      </ul>
-
-      <h2>9. ข้อควรระวัง</h2>
-      <ul>
-        <li>ก่อนเพิ่มสัญญาใหม่ ให้สำรองไฟล์และทดสอบในสาขาแยกก่อน</li>
-        <li>หากแก้ template HTML ต้องตรวจสอบ preview และไฟล์ดาวน์โหลดทุกครั้ง</li>
-        <li>อัพเดต localization ทั้งภาษาไทยและอังกฤษถ้าฟิลด์ใหม่มี label ใหม่</li>
-      </ul>
+      <section>
+        <h2 className="text-xl font-semibold">Revenue Summary</h2>
+        <div className="mt-3 rounded-md border bg-white p-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => fetchRevenue(7)} className="px-3 py-1 rounded bg-slate-100">7d</button>
+            <button onClick={() => fetchRevenue(30)} className="px-3 py-1 rounded bg-slate-100">30d</button>
+            <button onClick={() => fetchRevenue(90)} className="px-3 py-1 rounded bg-slate-100">90d</button>
+          </div>
+          <div className="mt-4">
+            {loadingRevenue ? (
+              <div>Loading revenue…</div>
+            ) : revenue ? (
+              <div>
+                <div className="text-sm text-slate-600">Range: last {revenue.days} days</div>
+                <div className="mt-2 text-2xl font-bold">
+                  {revenue.count} payments — {(revenue.total / 100).toFixed(2)} {revenue.currency?.toUpperCase()}
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => exportCsv(revenue)}
+                    className="rounded bg-slate-800 px-3 py-1 text-white text-sm"
+                  >
+                    Export CSV
+                  </button>
+                </div>
+                <div className="mt-4">
+                  <RevenueChart data={revenue} />
+                </div>
+              </div>
+            ) : (
+              <div>No data</div>
+            )}
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

@@ -112,8 +112,13 @@ export default function AdminPage() {
     }
   }
 
-  async function fetchRevenue(days = 30) {
-    if (!authToken) {
+  async function fetchRevenue(tokenOrDays: string | number, days = 30) {
+    const token = typeof tokenOrDays === 'string' ? tokenOrDays : authToken;
+    if (typeof tokenOrDays === 'number') {
+      days = tokenOrDays;
+    }
+
+    if (!token) {
       setMessage('Unable to load revenue without admin authorization.');
       return;
     }
@@ -122,7 +127,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/admin/revenue?days=${days}`, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       const data = await res.json();
@@ -152,7 +157,7 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
-  const RevenueChart = dynamic(() => import('./components/admin/RevenueChart').then(m => m.RevenueChart), { ssr: false });
+  const RevenueChart = dynamic(() => import('./components/RevenueChart').then(m => m.RevenueChart), { ssr: false });
 
   return (
     <main className="mx-auto min-h-screen px-6 py-10 text-slate-900 max-w-6xl">

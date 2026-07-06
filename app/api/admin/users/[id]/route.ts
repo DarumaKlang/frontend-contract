@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
 import { fetchJson } from '@/lib/apiClient';
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const adminErr = await requireAdmin(req);
   if (adminErr) return adminErr;
 
-  const { id } = params;
+  const { id } = await params;
   try {
     const body = await req.json();
     // Expect body to contain partial user update, e.g. { active: false } or { role: 'admin' }
@@ -21,11 +21,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const adminErr = await requireAdmin(req);
   if (adminErr) return adminErr;
 
-  const { id } = params;
+  const { id } = await params;
   try {
     await fetchJson(`/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
     return NextResponse.json({ deleted: true });

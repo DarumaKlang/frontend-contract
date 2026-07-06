@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   title: "Contract Generator",
   description: "Generate legal contracts and documents quickly and securely.",
   metadataBase: new URL('https://contract-generator.com'),
-  canonical: 'https://contract-generator.com',
   openGraph: {
     type: 'website',
     url: 'https://contract-generator.com',

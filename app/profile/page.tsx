@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { CreditCard, ShieldCheck, Wallet } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, isAdminEmail } from '@/lib/auth-context';
 
 interface SavedContract {
   id: string;
@@ -45,6 +46,7 @@ const emptyBillingForm = {
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [contracts, setContracts] = useState<SavedContract[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [billingForm, setBillingForm] = useState<BillingProfile>(emptyBillingForm);
@@ -52,6 +54,14 @@ export default function Profile() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    if (!user) {
+      const hasSessionCookie = document.cookie.split(';').some((value) => value.trim().startsWith('frontend_contract_auth='));
+      if (!hasSessionCookie) {
+        router.replace('/login');
+      }
+      return;
+    }
+
     const fetchData = async () => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
@@ -88,7 +98,7 @@ export default function Profile() {
     };
 
     fetchData();
-  }, [user]);
+  }, [router, user]);
 
   const saveBillingProfile = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -147,6 +157,11 @@ export default function Profile() {
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                 ระบบรองรับการชำระผ่าน Stripe และสามารถบันทึกข้อมูลเรียกเก็บเงินเพื่อให้การสมัครสมาชิกและคำสั่งชำระเป็นไปอย่างเรียบร้อย
               </p>
+              {isAdminEmail(user?.email) ? (
+                <div className="mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                  Admin access enabled
+                </div>
+              ) : null}
             </div>
             <button onClick={logout} className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
               ออกจากระบบ

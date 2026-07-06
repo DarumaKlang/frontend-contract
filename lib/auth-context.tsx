@@ -7,6 +7,9 @@ import { getSupabaseClient } from '@/lib/supabase';
 
 type Role = "user" | "admin";
 
+const AUTH_SESSION_COOKIE = "frontend_contract_auth";
+const ADMIN_EMAIL = "k.net.game01@gmail.com";
+
 interface User {
   id?: string;
   email: string;
@@ -27,6 +30,41 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
+export const isAdminEmail = (email?: string | null) => email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+const normalizeUser = (value: Partial<User> | null | undefined, fallbackRole: Role = "user"): User | null => {
+  if (!value?.email) return null;
+
+  return {
+    id: value.id,
+    email: value.email,
+    role: isAdminEmail(value.email) ? "admin" : (value.role ?? fallbackRole),
+    name: value.name,
+  };
+};
+
+const persistAuthCookie = (user: User | null, token: string | null = null) => {
+  if (typeof document === "undefined") return;
+
+  if (user && (token || user.email)) {
+    const payload = encodeURIComponent(JSON.stringify({
+      authenticated: true,
+      email: user.email,
+      role: user.role,
+      name: user.name ?? null,
+    }));
+    document.cookie = `${AUTH_SESSION_COOKIE}=${payload}; path=/; max-age=604800; SameSite=Lax`;
+    return;
+  }
+
+  document.cookie = `${AUTH_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+};
+
+const clearAuthCookie = () => {
+  if (typeof document === "undefined") return;
+  document.cookie = `${AUTH_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -39,7 +77,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedToken = localStorage.getItem("auth_token");
 
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = normalizeUser(JSON.parse(storedUser));
+      if (parsedUser) {
+        setUser(parsedUser);
+        persistAuthCookie(parsedUser, storedToken);
+      }
     }
 
     if (storedToken) {
@@ -52,20 +94,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data }) => {
       const session = data.session;
       if (session?.access_token) {
-        setToken(session.access_token);
-        localStorage.setItem("auth_token", session.access_token);
-        setUser({
+        const nextUser = normalizeUser({
           id: session.user.id,
           email: session.user.email ?? "",
           role: "user",
           name: session.user.user_metadata?.full_name ?? session.user.email ?? undefined,
         });
-        localStorage.setItem("auth_user", JSON.stringify({
-          id: session.user.id,
-          email: session.user.email ?? "",
-          role: "user",
-          name: session.user.user_metadata?.full_name ?? session.user.email ?? undefined,
-        }));
+        if (nextUser) {
+          setToken(session.access_token);
+          setUser(nextUser);
+          localStorage.setItem("auth_token", session.access_token);
+          localStorage.setItem("auth_user", JSON.stringify(nextUser));
+          persistAuthCookie(nextUser, session.access_token);
+        }
       }
     });
   }, []);
@@ -77,9 +118,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     authToken: string | null = null
   ) => {
     const newUser: User = {
-      email,
-      role,
       ...(backendUser ?? {}),
+      email,
+      role: isAdminEmail(email) ? "admin" : (backendUser?.role ?? role),
     };
 
     localStorage.setItem("auth_user", JSON.stringify(newUser));
@@ -92,18 +133,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setUser(newUser);
+    persistAuthCookie(newUser, authToken);
     router.push("/profile");
   };
 
   const logout = () => {
     const supabase = getSupabaseClient();
     if (supabase) {
-      supabase.auth.signOut();
+      void supabase.auth.signOut();
     }
     localStorage.removeItem("auth_user");
     localStorage.removeItem("auth_token");
     setUser(null);
     setToken(null);
+    clearAuthCookie();
     router.push("/login");
   };
 
@@ -123,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser: User = {
       id: session.user.id,
       email: session.user.email ?? email,
-      role: "user",
+      role: isAdminEmail(session.user.email ?? email) ? "admin" : "user",
       name: session.user.user_metadata?.full_name ?? session.user.email ?? undefined,
     };
 
@@ -131,6 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("auth_token", session.access_token);
     setUser(newUser);
     setToken(session.access_token);
+    persistAuthCookie(newUser, session.access_token);
     router.push("/profile");
     return { ok: true };
   };
@@ -158,13 +202,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const newUser: User = {
         id: session.user.id,
         email: session.user.email ?? email,
-        role: "user",
+        role: isAdminEmail(session.user.email ?? email) ? "admin" : "user",
         name: session.user.user_metadata?.full_name ?? session.user.email ?? undefined,
       };
       localStorage.setItem("auth_user", JSON.stringify(newUser));
       localStorage.setItem("auth_token", session.access_token);
       setUser(newUser);
       setToken(session.access_token);
+      persistAuthCookie(newUser, session.access_token);
       router.push("/profile");
     }
 
@@ -183,7 +228,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: {
+        redirectTo,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
     });
 
     if (error) {

@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { ArrowLeft, ArrowRight, Lock, PartyPopper, Scale } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, isAdminEmail } from '@/lib/auth-context';
 import { ContractFooter } from './components/contract-generator/ContractFooter';
 import { ContractHeader } from './components/contract-generator/ContractHeader';
 import { ContractPreviewPanel } from './components/contract-generator/ContractPreviewPanel';
@@ -13,6 +14,7 @@ import { useWizard } from './components/contract-generator/hooks/useWizard';
 
 export default function PageNew() {
   const { user } = useAuth();
+  const router = useRouter();
   const {
     appLanguage,
     setAppLanguage,
@@ -42,20 +44,27 @@ export default function PageNew() {
 
   // Check if user can access download/copy features
   const isLoggedIn = !!user;
-  const canAccessFeatures = isLoggedIn && hasPaid;
+  const isAdmin = isAdminEmail(user?.email);
+  const canAccessFeatures = isLoggedIn && (isAdmin || hasPaid);
 
   useEffect(() => {
-    // Disable right‑click context menu
     const blockContext = (e: MouseEvent) => e.preventDefault();
     document.addEventListener('contextmenu', blockContext);
-    // Check payment flag from localStorage
-    if (localStorage.getItem('paid') === 'true') {
-      setHasPaid(true);
+
+    const storedPayment = localStorage.getItem('paid') === 'true';
+    setHasPaid(storedPayment);
+
+    if (!user && typeof window !== 'undefined') {
+      const hasSessionCookie = document.cookie.split(';').some((value) => value.trim().startsWith('frontend_contract_auth='));
+      if (!hasSessionCookie) {
+        router.replace('/login');
+      }
     }
+
     return () => {
       document.removeEventListener('contextmenu', blockContext);
     };
-  }, []);
+  }, [router, user]);
 
   const handlePay = async () => {
     if (!stripePromise) {
@@ -91,7 +100,7 @@ export default function PageNew() {
       alert('Please log in to copy the contract.');
       return;
     }
-    if (!hasPaid) {
+    if (!isAdmin && !hasPaid) {
       alert('Please complete payment to copy the contract.');
       return;
     }
@@ -103,7 +112,7 @@ export default function PageNew() {
       alert('Please log in to download the contract.');
       return;
     }
-    if (!hasPaid) {
+    if (!isAdmin && !hasPaid) {
       alert('Please complete payment to download the contract.');
       return;
     }

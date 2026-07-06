@@ -45,12 +45,12 @@ export default function Login() {
   };
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600">
+    <section className="flex min-h-screen items-center justify-center bg-white px-4 py-8">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-xl bg-white/30 backdrop-blur-lg p-8 shadow-lg"
+        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-[0_12px_40px_rgba(15,23,42,0.08)]"
       >
-        <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">เข้าสู่ระบบ</h2>
+        <h2 className="mb-6 text-2xl font-bold text-center text-slate-900">เข้าสู่ระบบ</h2>
         {error && <p className="mb-4 text-center text-red-600">{error}</p>}
         {status && <p className="mb-4 text-center text-green-700">{status}</p>}
         <label className="block text-sm font-medium text-gray-700">อีเมล</label>
@@ -59,7 +59,7 @@ export default function Login() {
           required
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="mb-4 w-full rounded border bg-white/70 p-2"
+          className="mb-4 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
         />
         <label className="block text-sm font-medium text-gray-700">รหัสผ่าน</label>
         <input
@@ -67,11 +67,11 @@ export default function Login() {
           required
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="mb-6 w-full rounded border bg-white/70 p-2"
+          className="mb-6 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
         />
         <button
           type="submit"
-          className="w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700"
+          className="w-full rounded-lg bg-slate-900 px-4 py-2.5 font-semibold text-white transition hover:bg-slate-800"
         >
           Login
         </button>
@@ -80,14 +80,14 @@ export default function Login() {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full rounded border border-indigo-600 bg-white px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50"
+            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Sign in with Google
           </button>
           <button
             type="button"
             onClick={handleMagicLink}
-            className="w-full rounded border border-purple-600 bg-white px-4 py-2 font-semibold text-purple-700 hover:bg-purple-50"
+            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Send magic link
           </button>
@@ -95,7 +95,7 @@ export default function Login() {
 
         <p className="mt-4 text-center text-gray-700">
           ยังไม่มีบัญชี?{' '}
-          <a href="/register" className="text-indigo-800 underline">
+          <a href="/register" className="text-slate-700 underline">
             สมัครใหม่
           </a>
         </p>

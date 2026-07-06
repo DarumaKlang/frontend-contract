@@ -1,4 +1,5 @@
 import { FileSignature, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 import type { Language, TranslateFn } from './types';
 
 interface ContractHeaderProps {
@@ -23,7 +24,7 @@ export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t }: 
             <span className="block text-[10px] font-medium uppercase tracking-wide text-slate-400">Lease Agreement Generator</span>
           </div>
         </div>
-        <div className="flex items-center space-x-3 sm:space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <div className="flex items-center rounded-xl bg-slate-100 p-1">
             <button
               onClick={() => setAppLanguage('th')}
@@ -38,6 +39,12 @@ export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t }: 
               EN (English)
             </button>
           </div>
+          <Link
+            href="/register"
+            className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition-all hover:bg-sky-100"
+          >
+            สมัครสมาชิก
+          </Link>
           <button
             onClick={onQuickFill}
             className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-slate-900/10 transition-all hover:bg-slate-800 active:scale-95"

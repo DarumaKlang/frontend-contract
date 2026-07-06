@@ -169,6 +169,44 @@ const getInitialFormData = (): ContractData => ({
 export function useWizard() {
   // ---------- New state for contract handling ----------
   const [contractId, setContractId] = useState<string | undefined>(undefined);
+
+  const syncProfile = async (options?: { title?: string; documentLink?: string; points?: number }) => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    const profilePayload = {
+      contract_history: options?.title
+        ? [{ title: options.title, created_at: new Date().toISOString() }]
+        : [],
+      document_links: options?.documentLink
+        ? [{ label: options?.title ?? 'Contract document', url: options.documentLink }]
+        : [],
+      frequent_profile_data: {
+        sellerName: formData.sellerName,
+        buyerName: formData.buyerName,
+        productName: formData.productName,
+        state: formData.state,
+        country: formData.country,
+        unitPrice: formData.unitPrice,
+        currency: formData.currency,
+      },
+      points: options?.points ?? 0,
+      last_used_at: new Date().toISOString(),
+    };
+
+    try {
+      await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profilePayload),
+      });
+    } catch (error) {
+      console.error('Profile sync failed', error);
+    }
+  };
   
   // Save contract to backend (create or update)
   const saveContract = async () => {
@@ -194,6 +232,8 @@ export function useWizard() {
     }
     const { id } = await res.json();
     setContractId(id);
+    const documentLink = typeof window !== 'undefined' && id ? `${window.location.origin}/profile#contract-${id}` : undefined;
+    await syncProfile({ title: payload.title, documentLink, points: 10 });
     showToast(t('save-success') ?? 'Contract saved', 'success');
   };
 
@@ -662,6 +702,7 @@ export function useWizard() {
     document.body.appendChild(tempLink);
     tempLink.click();
     document.body.removeChild(tempLink);
+    void syncProfile({ title: 'Lease Agreement', documentLink: typeof window !== 'undefined' ? `${window.location.origin}/${fileName}` : undefined, points: 5 });
     showToast(appLanguage === 'th' ? 'ดาวน์โหลดไฟล์สัญญาสำเร็จแล้ว!' : 'Contract file downloaded successfully!');
   };
 

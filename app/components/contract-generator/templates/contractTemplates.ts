@@ -1,4 +1,4 @@
-﻿import type { ContractData, ContractType, Language } from '../types';
+import type { ContractData, ContractType, Language } from '../types';
 import { generateLeaseAgreementHtml } from './leaseTemplate';
 import { generateVehicleSaleAgreementHtml } from './vehicleSaleTemplate';
 import { generatePropertySaleAgreementHtml } from './propertySaleTemplate';

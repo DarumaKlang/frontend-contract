@@ -4,6 +4,7 @@ import { ArrowRight, Download, FileText, ShieldCheck, Sparkles, X } from 'lucide
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { buildPrintUsagePayload, getProfilePrintQuota, type ProfilePrintQuota, type UserProfile } from '@/lib/printQuota';
 
 type ContractKind = 'lease' | 'vehicle-sale' | 'property-sale' | 'employment' | 'testament';
@@ -876,7 +877,7 @@ export default function ContractsPage() {
             </div>
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700" dangerouslySetInnerHTML={{ __html: buildContractBody(selectedContract, currentValues, testamentBeneficiaries) }} />
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700" dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildContractBody(selectedContract, currentValues, testamentBeneficiaries)) }} />
             </div>
           </div>
         </div>

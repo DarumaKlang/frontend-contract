@@ -147,3 +147,9 @@ dist
 .windsurf/
 CLAUDE.md
 .vercel
+
+# Temporary test files
+tmp-*.*
+request-body.json
+tsc-*.txt
+*.tsbuildinfo

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { sanitizeArticleHtml } from '@/lib/sanitize';
 import { 
   Scale, 
   ArrowLeft, 
@@ -459,7 +460,7 @@ export default function Blog() {
                 {/* Inner Content */}
                 <div 
                   className="mt-6 text-slate-600 space-y-4 leading-relaxed text-sm sm:text-base prose prose-slate max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(selectedArticle.content) }}
                 />
               </div>
             </div>

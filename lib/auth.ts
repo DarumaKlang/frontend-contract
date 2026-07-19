@@ -1,49 +1,54 @@
-import type { NextRequest } from 'next/server';
+// lib/auth.ts - Supabase-based authentication only
+// All hardcoded credentials removed for security
 
-export interface User {
-  id: string;
-  email: string;
-  password: string; // plain text only for demo – never store plaintext in production
-  role: 'user' | 'admin';
+import type { NextRequest } from 'next/server';
+import { getSupabaseClient } from './supabase';
+
+export const SESSION_COOKIE = 'sb-access-token';
+
+/**
+ * Get authenticated user from Supabase token
+ */
+export async function getSessionUser(token: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return null;
+    return user;
+  } catch {
+    return null;
+  }
 }
 
-const users: User[] = [
-  {
-    id: 'admin-1',
-    email: 'Admin@Nuc7.com',
-    password: 'Admin@5577',
-    role: 'admin',
-  },
-];
+/**
+ * Extract auth token from request
+ */
+export function getAuthToken(req: NextRequest): string | null {
+  // Try Authorization header first
+  const authHeader = req.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  
+  // Fallback to cookie
+  const cookie = req.cookies.get(SESSION_COOKIE);
+  return cookie?.value ?? null;
+}
 
-export const findUserByEmail = (email: string) => users.find(u => u.email === email);
-export const findUserById = (id: string) => users.find(u => u.id === id);
-
-export const createUser = (email: string, password: string, role: 'user' | 'admin' = 'user') => {
-  const id = crypto.randomUUID();
-  const user: User = { id, email, password, role };
-  users.push(user);
-  return user;
-};
-
-export const verifyPassword = (user: User, password: string) => user.password === password;
-
-export const SESSION_COOKIE = 'session_id';
-
+/**
+ * Build secure cookie header
+ */
 const buildSetCookieHeader = (name: string, value: string, maxAge: number) => {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   return `${name}=${encodeURIComponent(value)}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
 };
 
-export const setSessionCookie = (res: Response, userId: string) => {
-  res.headers.set('Set-Cookie', buildSetCookieHeader(SESSION_COOKIE, userId, 60 * 60 * 24 * 7));
+export const setSessionCookie = (res: Response, token: string) => {
+  res.headers.set('Set-Cookie', buildSetCookieHeader(SESSION_COOKIE, token, 60 * 60 * 24 * 7));
 };
 
 export const clearSessionCookie = (res: Response) => {
   res.headers.set('Set-Cookie', buildSetCookieHeader(SESSION_COOKIE, '', 0));
-};
-
-export const getSessionUserId = (req: NextRequest): string | null => {
-  const cookie = req.cookies.get(SESSION_COOKIE);
-  return cookie?.value ?? null;
 };

@@ -1,4 +1,5 @@
 import { Code, Copy, Download, Eye, FileText, Lock } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import type { Language, PreviewFormat, TranslateFn } from './types';
 
 interface ContractPreviewPanelProps {
@@ -102,7 +103,7 @@ export function ContractPreviewPanel({
           </span>
         </div>
         {previewFormat === 'rich' ? (
-          <div className="max-h-[500px] overflow-y-auto border-t bg-white p-6 shadow-sm sm:p-10" dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+          <div className="max-h-[500px] overflow-y-auto border-t bg-white p-6 shadow-sm sm:p-10" dangerouslySetInnerHTML={{ __html: sanitizeHtml(generatedHtml) }} />
         ) : (
           <textarea readOnly value={generatedHtml} className="block h-[500px] w-full resize-none bg-slate-950 p-4 font-mono text-xs text-emerald-400 outline-none" />
         )}

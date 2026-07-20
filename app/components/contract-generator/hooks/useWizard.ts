@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { TranslateFn } from '../types';
 import type { ContractData, ContractType, Language, PreviewFormat, Toast, ToastType } from '../types';
-import { generateContractHtml } from '../templates/contractTemplates';
+import { renderContract } from '@/lib/services/templateOrchestrator';
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
@@ -242,7 +242,17 @@ const getInitialFormData = (): ContractData => ({
 export function useWizard() {
   // ---------- New state for contract handling ----------
   const [contractId, setContractId] = useState<string | undefined>(undefined);
-  const [contractType, setContractType] = useState<ContractType>('lease');
+  const [contractType, setContractType] = useState<ContractType>('vehicle-sale');
+  
+  // Template metadata and rendering cache
+  const [templateMetadata, setTemplateMetadata] = useState<{
+    source: 'database' | 'fallback';
+    templateId?: string;
+    version?: number;
+  } | null>(null);
+  const [templateWarnings, setTemplateWarnings] = useState<string[]>([]);
+  const [generatedHtmlCache, setGeneratedHtmlCache] = useState<string>('');
+  const isGeneratingRef = useRef(false);
 
   const syncProfile = async (options?: { title?: string; documentLink?: string; points?: number }) => {
     const token = getAuthToken();
@@ -287,7 +297,7 @@ export function useWizard() {
     const payload = {
       title: contractType === 'vehicle-sale' ? 'Vehicle Sale Agreement' : contractType === 'property-sale' ? 'Property Sale Agreement' : 'Lease Agreement',
       data: formData,
-      html: getGeneratedHtml(),
+      html: generatedHtmlCache,
     };
     const method = contractId ? 'PUT' : 'POST';
     const url = contractId ? `/api/contracts/${contractId}` : '/api/contracts';
@@ -829,13 +839,51 @@ export function useWizard() {
     }
   };
 
-  const getGeneratedHtml = () => generateContractHtml({
-    contractType,
-    appLanguage,
-    formData,
-    formatMoney,
-    thaiBahtText,
-  });
+  const getGeneratedHtml = () => generatedHtmlCache;
+
+  // Generate contract HTML using Template Orchestrator
+  useEffect(() => {
+    const generateHtml = async () => {
+      if (isGeneratingRef.current) return;
+      isGeneratingRef.current = true;
+
+      try {
+        // Convert appLanguage to TemplateLanguage type
+        const templateLanguage = (appLanguage === 'th' || appLanguage === 'en') ? appLanguage : 'th';
+        
+        const result = await renderContract(
+          contractType,
+          templateLanguage,
+          formData
+        );
+
+        setGeneratedHtmlCache(result.html);
+        setTemplateMetadata({
+          source: result.metadata.source,
+          templateId: result.metadata.templateId,
+          version: result.metadata.version,
+        });
+        setTemplateWarnings(result.warnings);
+
+        // Log metadata for monitoring (visible in console for developers)
+        if (result.metadata.source === 'database') {
+          console.info(
+            `Template rendered from database: ID=${result.metadata.templateId}, Version=${result.metadata.version}`
+          );
+        } else {
+          console.warn(`Template rendered from fallback: ${result.warnings.join('; ')}`);
+        }
+      } catch (error) {
+        console.error('Error generating contract HTML:', error);
+        setTemplateWarnings([`Error generating contract: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+        setGeneratedHtmlCache('');
+      } finally {
+        isGeneratingRef.current = false;
+      }
+    };
+
+    generateHtml();
+  }, [formData, contractType, appLanguage]);
 
   // expose new functions for UI components
   const exportApi = {
@@ -898,6 +946,8 @@ export function useWizard() {
     t,
     getGeneratedHtml,
     contractType,
-    setContractType
+    setContractType,
+    templateMetadata,
+    templateWarnings,
   };
 }

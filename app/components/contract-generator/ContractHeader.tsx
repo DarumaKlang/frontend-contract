@@ -47,16 +47,16 @@ export function ContractHeader({ appLanguage, setAppLanguage, onQuickFill, t, co
           </div>
           <div className="flex flex-wrap items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
-              onClick={() => setContractType('lease')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'lease' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              เช่า
-            </button>
-            <button
               onClick={() => setContractType('vehicle-sale')}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'vehicle-sale' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
             >
               ซื้อขายรถ
+            </button>
+            <button
+              onClick={() => setContractType('lease')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${contractType === 'lease' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              เช่า
             </button>
             <button
               onClick={() => setContractType('property-sale')}

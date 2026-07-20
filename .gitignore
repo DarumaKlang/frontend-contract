@@ -153,3 +153,7 @@ tmp-*.*
 request-body.json
 tsc-*.txt
 *.tsbuildinfo
+stripe.exe
+lib/stripe.exe
+lib/issuing-treasury-main.zip
+build_output.txt

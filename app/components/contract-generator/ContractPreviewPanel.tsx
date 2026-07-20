@@ -1,4 +1,4 @@
-import { Code, Copy, Download, Eye, FileText, Lock } from 'lucide-react';
+import { Code, Copy, Download, Eye, FileText, Lock, Database, Zap } from 'lucide-react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Language, PreviewFormat, TranslateFn } from './types';
 
@@ -13,6 +13,13 @@ interface ContractPreviewPanelProps {
   isLocked?: boolean;
   isLoggedIn?: boolean;
   hasPaid?: boolean;
+  templateMetadata?: {
+    source: 'database' | 'fallback';
+    templateId?: string;
+    version?: number;
+  } | null;
+  templateWarnings?: string[];
+  isAdmin?: boolean;
 }
 
 export function ContractPreviewPanel({
@@ -25,7 +32,10 @@ export function ContractPreviewPanel({
   t,
   isLocked = false,
   isLoggedIn = false,
-  hasPaid = false
+  hasPaid = false,
+  templateMetadata = null,
+  templateWarnings = [],
+  isAdmin = false
 }: ContractPreviewPanelProps) {
   const getLockMessage = (): string => {
     if (!isLoggedIn) return 'Please log in to access this feature';
@@ -88,6 +98,54 @@ export function ContractPreviewPanel({
               {!isLoggedIn && 'Please log in to access download and copy features'}
               {isLoggedIn && !hasPaid && 'Please complete payment to access download and copy features'}
             </span>
+          </div>
+        </div>
+      )}
+      {isAdmin && templateMetadata && (
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="text-xs font-semibold uppercase text-slate-600">Developer Mode</div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              {templateMetadata.source === 'database' ? (
+                <>
+                  <Database className="h-4 w-4 text-sky-600" />
+                  <span className="text-sm font-medium text-slate-700">
+                    Template Source: <span className="text-sky-600">Database</span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-slate-700">
+                    Template Source: <span className="text-amber-600">Fallback</span>
+                  </span>
+                </>
+              )}
+            </div>
+            {templateMetadata.source === 'database' && templateMetadata.templateId && (
+              <div className="ml-6 space-y-1 text-xs text-slate-600">
+                <div>
+                  <span className="font-semibold">Template ID:</span> {templateMetadata.templateId}
+                </div>
+                {templateMetadata.version && (
+                  <div>
+                    <span className="font-semibold">Version:</span> {templateMetadata.version}
+                  </div>
+                )}
+              </div>
+            )}
+            {templateWarnings.length > 0 && (
+              <div className="ml-6 space-y-1">
+                <div className="text-xs font-semibold text-amber-700">Warnings:</div>
+                <ul className="space-y-1">
+                  {templateWarnings.map((warning, idx) => (
+                    <li key={idx} className="text-xs text-amber-600 pl-3 before:content-['•'] before:mr-2">
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       )}

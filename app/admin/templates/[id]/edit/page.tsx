@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Save, Eye, ArrowLeft, AlertCircle, Trash2, CheckCircle, History } from 'lucide-react';
+import { Save, Eye, ArrowLeft, AlertCircle, Trash2, CheckCircle, History, X } from 'lucide-react';
 import type { ContractTemplate, TemplateVariable, ContractType, TemplateLanguage } from '@/lib/types/template';
+import { SAMPLE_DATA } from '@/lib/sampleData/contractSampleData';
 
 // Dynamic import Monaco Editor (client-side only)
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
@@ -35,6 +36,9 @@ export default function EditTemplatePage() {
   // Preview state
   const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
+  const [previewErrors, setPreviewErrors] = useState<string[]>([]);
+  const [previewValidationErrors, setPreviewValidationErrors] = useState<string[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -117,6 +121,47 @@ export default function EditTemplatePage() {
   }
 
   async function handlePublish() {
+    // Validate template syntax before allowing publish
+    setPreviewLoading(true);
+    try {
+      const sampleData = SAMPLE_DATA[contractType]?.[language];
+      if (!sampleData) {
+        setError(`Cannot publish: Sample data not found for contract type "${contractType}" in language "${language}"`);
+        setPreviewLoading(false);
+        return;
+      }
+
+      const res = await fetch('/api/admin/templates/preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          template_html: templateHtml,
+          template_css: templateCss,
+          sample_data: sampleData,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.errors?.length > 0) {
+        // Template validation failed - prevent publish
+        const errorMessages = (data.errors || []).join('\n');
+        setError(`Cannot publish: Invalid Handlebars syntax\n${errorMessages}`);
+        setPreviewLoading(false);
+        return;
+      }
+    } catch (err: any) {
+      setError(`Cannot publish: Validation error - ${err.message}`);
+      setPreviewLoading(false);
+      return;
+    } finally {
+      setPreviewLoading(false);
+    }
+
+    // Template validation passed - proceed with publish
     if (!confirm('เผยแพร่ template นี้? ระบบจะปิดการใช้งาน template เวอร์ชันเก่า (ถ้ามี)')) return;
 
     try {
@@ -196,7 +241,20 @@ export default function EditTemplatePage() {
   }
 
   async function handlePreview() {
+    setPreviewLoading(true);
+    setPreviewErrors([]);
+    setPreviewValidationErrors([]);
+
     try {
+      // Get sample data for the current contract type and language
+      const sampleData = SAMPLE_DATA[contractType]?.[language];
+      if (!sampleData) {
+        setPreviewValidationErrors([
+          `Sample data not found for contract type "${contractType}" in language "${language}"`,
+        ]);
+        return;
+      }
+
       const res = await fetch('/api/admin/templates/preview', {
         method: 'POST',
         headers: {
@@ -206,20 +264,27 @@ export default function EditTemplatePage() {
         body: JSON.stringify({
           template_html: templateHtml,
           template_css: templateCss,
-          sample_data: SAMPLE_DATA[contractType],
+          sample_data: sampleData,
         }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.rendered) {
         setPreviewHtml(data.rendered);
+        setPreviewValidationErrors([]);
+        setPreviewErrors(data.warnings || []);
         setShowPreview(true);
       } else {
-        setError(data.error || 'Preview failed');
+        // Validation errors - template has invalid Handlebars syntax
+        setPreviewValidationErrors(data.errors || [data.error || 'Preview failed']);
+        setPreviewErrors([]);
       }
     } catch (err: any) {
-      setError(err.message || 'Preview failed');
+      setPreviewValidationErrors([err.message || 'Preview failed']);
+      setPreviewErrors([]);
+    } finally {
+      setPreviewLoading(false);
     }
   }
 
@@ -270,10 +335,11 @@ export default function EditTemplatePage() {
               </button>
               <button
                 onClick={handlePreview}
-                className="flex items-center gap-2 px-4 py-2 border border-slate-300 hover:bg-slate-50 rounded-lg font-medium transition"
+                disabled={previewLoading}
+                className="flex items-center gap-2 px-4 py-2 border border-slate-300 hover:bg-slate-50 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Eye size={18} />
-                Quick Preview
+                {previewLoading ? 'Rendering...' : 'Preview'}
               </button>
               <button
                 onClick={() => handleSave(true)}
@@ -293,10 +359,11 @@ export default function EditTemplatePage() {
               ) : (
                 <button
                   onClick={handlePublish}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+                  disabled={previewLoading}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle size={18} />
-                  เผยแพร่
+                  {previewLoading ? 'ตรวจสอบ...' : 'เผยแพร่'}
                 </button>
               )}
               <button
@@ -318,7 +385,24 @@ export default function EditTemplatePage() {
             <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
             <div className="flex-1">
               <h3 className="font-semibold text-red-900">Error</h3>
-              <p className="text-red-700 text-sm">{error}</p>
+              <p className="text-red-700 text-sm whitespace-pre-wrap">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {previewValidationErrors.length > 0 && (
+          <div className="mb-6 bg-red-50 border-2 border-red-400 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-900">Cannot publish: Invalid Handlebars syntax</h3>
+              <ul className="text-red-700 text-sm mt-2 space-y-1">
+                {previewValidationErrors.map((err, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-red-500 font-bold flex-shrink-0">•</span>
+                    <span>{err}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}
@@ -467,17 +551,48 @@ export default function EditTemplatePage() {
       {showPreview && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900">Preview</h2>
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <h2 className="text-xl font-semibold text-slate-900">Template Preview</h2>
               <button
                 onClick={() => setShowPreview(false)}
-                className="text-slate-400 hover:text-slate-600 text-2xl"
+                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded transition"
               >
-                ×
+                <X size={24} />
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-6">
-              <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+
+            {/* Warnings section */}
+            {previewErrors.length > 0 && (
+              <div className="px-6 py-3 bg-amber-50 border-b border-amber-200">
+                <h3 className="font-semibold text-amber-900 text-sm mb-2">Warnings</h3>
+                <ul className="text-amber-800 text-xs space-y-1">
+                  {previewErrors.map((warn, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-amber-600 font-bold flex-shrink-0">•</span>
+                      <span>{warn}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Preview content */}
+            <div className="flex-1 overflow-auto p-6 bg-white border-b border-slate-200">
+              <div className="bg-white border border-slate-200 rounded p-6 min-h-full">
+                {previewHtml ? (
+                  <div 
+                    className="contract-preview"
+                    dangerouslySetInnerHTML={{ __html: previewHtml }} 
+                  />
+                ) : (
+                  <p className="text-slate-500 text-center py-12">No preview available</p>
+                )}
+              </div>
+            </div>
+
+            {/* Footer with sample data info */}
+            <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-600">
+              <p>Preview rendered with sample data for <strong>{contractType}</strong> contract type in <strong>{language.toUpperCase()}</strong> language</p>
             </div>
           </div>
         </div>
@@ -485,46 +600,3 @@ export default function EditTemplatePage() {
     </div>
   );
 }
-
-// Sample data for preview
-const SAMPLE_DATA: Record<ContractType, Record<string, any>> = {
-  lease: {
-    title: 'สัญญาเช่าคอนโดมิเนียม',
-    state: 'กรุงเทพมหานคร',
-    contractDate: new Date().toISOString(),
-    sellerName: 'นายสมชาย ใจดี',
-    sellerAddress: '123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110',
-    buyerName: 'นางสมหญิง สบายดี',
-    buyerAddress: '456 ถนนพระราม 4 แขวงพระโขนง เขตคลองเตย กรุงเทพฯ 10110',
-    depositAmount: 20000,
-  },
-  'vehicle-sale': {
-    title: 'สัญญาซื้อขายรถยนต์',
-    state: 'กรุงเทพมหานคร',
-    contractDate: new Date().toISOString(),
-    sellerName: 'นายสมชาย ใจดี',
-    buyerName: 'นางสมหญิง สบายดี',
-    depositAmount: 50000,
-  },
-  'property-sale': {
-    title: 'สัญญาซื้อขายอสังหาริมทรัพย์',
-    state: 'กรุงเทพมหานคร',
-    contractDate: new Date().toISOString(),
-    sellerName: 'นายสมชาย ใจดี',
-    buyerName: 'นางสมหญิง สบายดี',
-    depositAmount: 100000,
-  },
-  employment: {
-    title: 'สัญญาจ้างงาน',
-    state: 'กรุงเทพมหานคร',
-    contractDate: new Date().toISOString(),
-    sellerName: 'บริษัท ABC จำกัด',
-    buyerName: 'นายสมชาย ใจดี',
-  },
-  testament: {
-    title: 'พินัยกรรม',
-    state: 'กรุงเทพมหานคร',
-    contractDate: new Date().toISOString(),
-    sellerName: 'นายสมชาย ใจดี',
-  },
-};

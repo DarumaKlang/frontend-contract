@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Plus, Search, Filter, Edit2, Trash2, Eye, CheckCircle, Circle, Clock } from 'lucide-react';
+import { FileText, Plus, Search, Filter, Edit2, Trash2, Eye, CheckCircle, Circle, Clock, GitCompare } from 'lucide-react';
 import type { TemplateListItem, ContractType, TemplateLanguage } from '@/lib/types/template';
 
 export default function TemplatesPage() {
@@ -219,6 +219,13 @@ export default function TemplatesPage() {
                       className="flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium transition"
                     >
                       <Eye size={16} />
+                    </button>
+                    <button
+                      onClick={() => router.push(`/admin/templates/${template.id}/versions`)}
+                      className="flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium transition"
+                      title="View version history and compare versions"
+                    >
+                      <GitCompare size={16} />
                     </button>
                     <button
                       onClick={() => deleteTemplate(template.id, template.name)}

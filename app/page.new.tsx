@@ -34,6 +34,8 @@ export default function PageNew() {
     getGeneratedHtml,
     contractType,
     setContractType,
+    templateMetadata,
+    templateWarnings,
   } = useWizard();
 
   const generatedHtml = getGeneratedHtml();
@@ -220,6 +222,9 @@ export default function PageNew() {
                     isLocked={!canAccessFeatures}
                     isLoggedIn={isLoggedIn}
                     hasPaid={hasPaid}
+                    templateMetadata={templateMetadata}
+                    templateWarnings={templateWarnings}
+                    isAdmin={isAdmin}
                   />
                 </div>
               )}

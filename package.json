@@ -7,7 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "migrate:templates": "ts-node scripts/migrateTemplates.ts",
+    "migrate:templates:prod": "node -e \"const prompt = require('prompt-sync')(); const answer = prompt('Are you sure you want to migrate templates to production? (yes/no): '); if (answer.toLowerCase() === 'yes') { require('child_process').execSync('ts-node scripts/migrateTemplates.ts', { stdio: 'inherit' }); } else { console.log('Migration cancelled.'); }\"",
+    "validate:template-coverage": "ts-node scripts/validateTemplateCoverage.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -34,8 +40,12 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "fast-check": "^3.23.2",
+    "prompt-sync": "^4.2.0",
     "tailwindcss": "^4.3.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5",
-    "vercel": "^54.20.1"
+    "vercel": "^54.20.1",
+    "vitest": "^1.6.1"
   }
 }
